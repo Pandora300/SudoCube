@@ -22,15 +22,17 @@ class Cell:
 class Piece:
     PIECE_VALUE_INDEX = 0
     PIECE_ORIENTATION_INDEX = 1
+    PIECE_FACING_INDEX = 2
 
-    def __init__(self, pieceValues: list[tuple[int, int]]):
+    def __init__(self, pieceValues: list[tuple[int | str]]):
         # 'Piece' object attribute initialization
-        self.__cells: list[Cell] = list()
+        self.__cells: dict[str, Cell] = dict()
 
         # Going through the input to store information using attributes
         for indexValue in range(len(pieceValues)):
-            self.__cells.append(Cell(value=pieceValues[indexValue][self.PIECE_VALUE_INDEX],
-                                     orientation=pieceValues[indexValue][self.PIECE_ORIENTATION_INDEX]))
+            self.__cells[pieceValues[indexValue][self.PIECE_FACING_INDEX]] = \
+                (Cell(value=pieceValues[indexValue][self.PIECE_VALUE_INDEX],
+                      orientation=pieceValues[indexValue][self.PIECE_ORIENTATION_INDEX]))
 
     def __repr__(self):
         # 'Piece' object representation in string
@@ -65,6 +67,11 @@ class Face:
 
     @property
     def pieces(self):
+        # Return the internal 'pieces' variable
+        return self.__pieces
+
+    @property
+    def face_pieces(self):
         # Return the internal 'pieces' variable
         return self.__pieces
 
