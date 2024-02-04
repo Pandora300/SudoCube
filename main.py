@@ -2,19 +2,19 @@ import copy
 import enum
 
 
-class Orientation(enum.Enum):
+class Orientation(enum.IntEnum):
     UP = 0
     RIGHT = 1
     DOWN = 2
     LEFT = 3
 
 
-class Facing(enum.Enum):
+class Facing(enum.IntEnum):
     FRONT = 0
-    BACK = 1
-    UP = 2
-    DOWN = 3
-    RIGHT = 4
+    UP = 1
+    RIGHT = 2
+    BACK = 3
+    DOWN = 4
     LEFT = 5
 
 
@@ -26,7 +26,7 @@ class Cell:
 
     def __repr__(self):
         # 'Cell' object representation in string
-        return f"<Cell object with value={self.__value} and value_orientation={self.__valueOrientation}>"
+        return f"<Cell object with value={self.__value} and value_orientation={self.__value_orientation}>"
 
     @property
     def value(self):
@@ -44,8 +44,9 @@ class Face:
     PIECE_VALUE_INDEX = 0
     PIECE_ORIENTATION_INDEX = 1
 
-    def __init__(self, pieceValues: list[list[tuple[int, int]]]):
+    def __init__(self, pieceValues: list[list[tuple[int, int]]], facing: Facing):
         # 'Face' object attribute initialization
+        self.__facing = facing
         self.__cells: list[list[Cell | None]] = [[None for _ in range(self.PIECE_COUNT)]
                                                  for _ in range(self.PIECE_COUNT)]
 
@@ -58,7 +59,17 @@ class Face:
 
     def __repr__(self):
         # 'Face' object representation
-        return f"<Piece object with {self.PIECE_COUNT}x{self.PIECE_COUNT} cells>"
+        return f"<Piece object with {self.PIECE_COUNT}x{self.PIECE_COUNT} cells facing {self.__facing}>"
+
+    @property
+    def cells(self):
+        # Return the internal 'cells' variable
+        return self.__cells
+
+    @property
+    def facing(self):
+        # Return the internal 'facing' variable
+        return self.__facing
 
     def print(self):
         # 'Face' object displayed in string
@@ -66,14 +77,29 @@ class Face:
         print('\n'.join(str([self.__cells[xIndex][yIndex].value for yIndex in range(self.PIECE_COUNT)])
                         for xIndex in range(self.PIECE_COUNT)))
 
-    def cell(self, facing: Facing):
-        # Return one of the 'cell' variable
-        pass
+    def getEdge(self, facing: Facing):
+        # Initialing edge's values variable
+        edgesValues = list()
 
-    @property
-    def cells(self):
-        # Return the internal 'cells' variable
-        return self.__cells
+        # Going through the '__cells' attribute to return the edge values
+        for index in range(self.PIECE_COUNT):
+            # Looking to determine which side of the face we need to return
+            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))] \
+                  .index(facing):
+                case Orientation.UP:
+                    edgesValues.append(self.__cells[0][index])
+
+                case Orientation.RIGHT:
+                    edgesValues.append(self.__cells[index][self.PIECE_COUNT - 1])
+
+                case Orientation.DOWN:
+                    edgesValues.append(self.__cells[self.PIECE_COUNT - 1][index])
+
+                case Orientation.LEFT:
+                    edgesValues.append(self.__cells[index][0])
+
+        # Returning the asked edge's values
+        return edgesValues
 
     def rotate_clockwise(self):
         # Saving the current state of the '__cells' attribute
@@ -115,12 +141,17 @@ if __name__ == "__main__":
                      (9, 0)]]
 
     print(piece_Values)
-    piece1 = Face(pieceValues=piece_Values)
+    piece1 = Face(pieceValues=piece_Values, facing=Facing.FRONT)
     print(piece1)
     piece1.print()
     piece1.rotate_clockwise()
     piece1.print()
+    print(piece1.getEdge(facing=Facing.UP))
     piece1.rotate_counter_clockwise()
     piece1.print()
+    print(piece1.getEdge(facing=Facing.RIGHT))
     piece1.rotate_u_turn()
     piece1.print()
+    print(piece1.getEdge(facing=Facing.DOWN))
+    piece1.print()
+    print(piece1.getEdge(facing=Facing.LEFT))
