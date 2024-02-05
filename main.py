@@ -47,8 +47,7 @@ class Face:
     def __init__(self, pieceValues: list[list[tuple[int, int]]], facing: Facing):
         # 'Face' object attribute initialization
         self.__facing = facing
-        self.__cells: list[list[Cell | None]] = [[None for _ in range(self.PIECE_COUNT)]
-                                                 for _ in range(self.PIECE_COUNT)]
+        self.__cells: list[list[Cell | None]] = [[None] * self.PIECE_COUNT] * self.PIECE_COUNT
 
         # Going through the input to store information in the '__cells' attribute
         for xIndex in range(self.PIECE_COUNT):
@@ -77,36 +76,34 @@ class Face:
         print('\n'.join(str([self.__cells[xIndex][yIndex].value for yIndex in range(self.PIECE_COUNT)])
                         for xIndex in range(self.PIECE_COUNT)))
 
-    def getEdgeValues(self, facing: Facing):
+    def get_edge_values(self, facing: Facing):
         # Initialing edge's values variable
-        edgesValues = list()
+        edges_values = list()
 
         # Going through the '__cells' attribute to return the edge values
         for index in range(self.PIECE_COUNT):
             # Looking to determine which side of the face we need to return
-            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))] \
-                  .index(facing):
+            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))].index(facing):
                 case Orientation.UP:
-                    edgesValues.append(self.__cells[0][index])
+                    edges_values.append(self.__cells[0][index])
 
                 case Orientation.RIGHT:
-                    edgesValues.append(self.__cells[index][self.PIECE_COUNT - 1])
+                    edges_values.append(self.__cells[index][self.PIECE_COUNT - 1])
 
                 case Orientation.DOWN:
-                    edgesValues.append(self.__cells[self.PIECE_COUNT - 1][index])
+                    edges_values.append(self.__cells[self.PIECE_COUNT - 1][index])
 
                 case Orientation.LEFT:
-                    edgesValues.append(self.__cells[index][0])
+                    edges_values.append(self.__cells[index][0])
 
         # Returning the asked edge's values
-        return edgesValues
+        return edges_values
 
-    def setEdgeValues(self, facing: Facing, edgesValues: list[Cell]):
+    def set_edge_values(self, facing: Facing, edgesValues: list[Cell]):
         # Going through the '__cells' attribute to return the edge values
         for index in range(self.PIECE_COUNT):
             # Looking to determine which side of the face we need to return
-            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))] \
-                  .index(facing):
+            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))].index(facing):
                 case Orientation.UP:
                     self.__cells[0][index] = edgesValues[index]
 
@@ -147,29 +144,43 @@ class Face:
                 self.__cells[self.PIECE_COUNT - xIndex - 1][self.PIECE_COUNT - yIndex - 1] = cells[xIndex][yIndex]
 
 
-if __name__ == "__main__":
-    piece_Values = [[(1, 2),
-                     (5, 1),
-                     (0, 1)],
-                    [(6, 1),
-                     (6, 2),
-                     (2, 1)],
-                    [(6, 3),
-                     (4, 0),
-                     (9, 0)]]
+class Cube:
+    FACE_COUNT = 6
 
-    print(piece_Values)
-    piece1 = Face(pieceValues=piece_Values, facing=Facing.FRONT)
+    def __init__(self, faces_values: dict[Face]):
+        self.__faces = [Face(facing=facing, pieceValues=face_values)
+                        for facing, face_values in faces_values.items()]
+
+
+if __name__ == "__main__":
+    piece_values = [[(1, Orientation.DOWN),
+                     (5, Orientation.RIGHT),
+                     (0, Orientation.RIGHT)],
+                    [(6, Orientation.RIGHT),
+                     (6, Orientation.DOWN),
+                     (2, Orientation.RIGHT)],
+                    [(6, Orientation.LEFT),
+                     (4, Orientation.UP),
+                     (9, Orientation.UP)]]
+
+    new_edge = [Cell(value=value, value_orientation=value_orientation)
+                for value, value_orientation in [(6, Orientation.DOWN),
+                                                 (6, Orientation.RIGHT),
+                                                 (6, Orientation.UP)]]
+
+    print(piece_values)
+    piece1 = Face(pieceValues=piece_values, facing=Facing.FRONT)
     print(piece1)
     piece1.print()
     piece1.rotate_clockwise()
     piece1.print()
-    print(piece1.getEdgeValues(facing=Facing.UP))
+    print(piece1.get_edge_values(facing=Facing.UP))
     piece1.rotate_counter_clockwise()
     piece1.print()
-    print(piece1.getEdgeValues(facing=Facing.RIGHT))
+    print(piece1.get_edge_values(facing=Facing.RIGHT))
     piece1.rotate_u_turn()
     piece1.print()
-    print(piece1.getEdgeValues(facing=Facing.DOWN))
+    print(piece1.get_edge_values(facing=Facing.DOWN))
     piece1.print()
-    print(piece1.getEdgeValues(facing=Facing.LEFT))
+    piece1.set_edge_values(Facing.LEFT, new_edge)
+    piece1.print()
