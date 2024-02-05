@@ -151,6 +151,15 @@ class Cube:
         self.__faces = [Face(facing=facing, pieceValues=face_values)
                         for facing, face_values in faces_values.items()]
 
+    def rotate_clockwise(self):
+        pass
+
+    def rotate_counter_clockwise(self):
+        pass
+
+    def rotate_u_turn(self):
+        pass
+
 
 if __name__ == "__main__":
     piece_values = [[(1, Orientation.DOWN),
