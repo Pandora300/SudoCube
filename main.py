@@ -148,13 +148,41 @@ class Cube:
     FACE_COUNT = 6
 
     def __init__(self, faces_values: dict[Facing, list[list[tuple[int, Orientation]]]]):
-        self.__faces = [Face(facing=facing, pieceValues=face_values)
-                        for facing, face_values in faces_values.items()]
+        self.__faces: dict[Facing, Face] = {facing: Face(facing=facing, pieceValues=face_values)
+                                            for facing, face_values in faces_values.items()}
+
+    def __repr__(self):
+        # 'Cube' object representation in string
+        return f"<Cube object with>"
 
     @property
     def faces(self):
         # Return the internal 'faces' variable
         return self.__faces
+
+    def print(self):
+        _str: str = str()
+        _str += ' ' * 7 + '+-+-+-+\n'
+        _str += '\n'.join(' ' * 7 + '|' + '|'.join(str(cell.value) for cell in cell_row) + '|'
+                          for cell_row in self.__faces[Facing.DOWN].cells)
+        _str += '\n' + ' ' * 7 + '+-+-+-+\n'
+        _str += '\n'.join(' ' * 7 + '|' + '|'.join(str(cell.value) for cell in cell_row) + '|'
+                          for cell_row in self.__faces[Facing.BACK].cells)
+        _str += '\n+-+-+-++-+-+-++-+-+-+\n'
+        _str += '|' + '|'.join(str(cell.value) for cell in self.__faces[Facing.LEFT].cells[0]) + '||' \
+                + '|'.join(str(cell.value) for cell in self.__faces[Facing.UP].cells[0]) + '||' \
+                + '|'.join(str(cell.value) for cell in self.__faces[Facing.RIGHT].cells[0]) + '|'
+        _str += '\n' + '|' + '|'.join(str(cell.value) for cell in self.__faces[Facing.LEFT].cells[1]) + '||' \
+                + '|'.join(str(cell.value) for cell in self.__faces[Facing.UP].cells[1]) + '||' \
+                + '|'.join(str(cell.value) for cell in self.__faces[Facing.RIGHT].cells[1]) + '|'
+        _str += '\n' + '|' + '|'.join(str(cell.value) for cell in self.__faces[Facing.LEFT].cells[2]) + '||' \
+                + '|'.join(str(cell.value) for cell in self.__faces[Facing.UP].cells[2]) + '||' \
+                + '|'.join(str(cell.value) for cell in self.__faces[Facing.RIGHT].cells[2]) + '|'
+        _str += '\n+-+-+-++-+-+-++-+-+-+\n'
+        _str += '\n'.join(' ' * 7 + '|' + '|'.join(str(cell.value) for cell in cell_row) + '|'
+                          for cell_row in self.__faces[Facing.FRONT].cells)
+        _str += '\n' + ' ' * 7 + '+-+-+-+\n'
+        print(_str)
 
     def rotate_clockwise(self, facing: Facing):
         #
@@ -165,13 +193,14 @@ class Cube:
         self.__faces[facing].rotate_clockwise()
 
         #
-        for facing_index in neighbours_edges_facing:
-            rotating_edges_values.append(self.__faces[facing].get_edge_values(facing=facing_index))
+        for _facing in neighbours_edges_facing:
+            rotating_edges_values.append(self.__faces[_facing].get_edge_values(facing=facing))
 
         #
         for facing_index in range(len(neighbours_edges_facing)):
-            self.__faces[facing].set_edge_values(facing=neighbours_edges_facing[facing_index],
-                                                 edgesValues=rotating_edges_values[facing_index])
+            self.__faces[neighbours_edges_facing[(facing_index + 1) % 4]] \
+                .set_edge_values(facing=neighbours_edges_facing[facing_index],
+                                 edgesValues=rotating_edges_values[facing_index])
 
     def rotate_counter_clockwise(self, facing: Facing):
         pass
@@ -187,7 +216,7 @@ if __name__ == "__main__":
                                     [(7, Orientation.UP),
                                      (5, Orientation.UP),
                                      (1, Orientation.UP)],
-                                    [(9, Orientation.UP),
+                                    [(7, Orientation.UP),
                                      (2, Orientation.UP),
                                      (8, Orientation.UP)]],
                      Facing.DOWN: [[(3, Orientation.UP),
@@ -195,11 +224,11 @@ if __name__ == "__main__":
                                     (7, Orientation.UP)],
                                    [(2, Orientation.UP),
                                     (1, Orientation.UP),
-                                    (9, Orientation.UP)],
+                                    (7, Orientation.UP)],
                                    [(5, Orientation.UP),
                                     (6, Orientation.UP),
                                     (4, Orientation.UP)]],
-                     Facing.RIGHT: [[(9, Orientation.UP),
+                     Facing.RIGHT: [[(7, Orientation.UP),
                                      (7, Orientation.UP),
                                      (1, Orientation.UP)],
                                     [(2, Orientation.UP),
@@ -215,9 +244,9 @@ if __name__ == "__main__":
                                     (7, Orientation.UP),
                                     (3, Orientation.UP)],
                                    [(6, Orientation.UP),
-                                    (9, Orientation.UP),
+                                    (7, Orientation.UP),
                                     (5, Orientation.UP)]],
-                     Facing.UP: [[(9, Orientation.UP),
+                     Facing.UP: [[(7, Orientation.UP),
                                   (8, Orientation.UP),
                                   (7, Orientation.UP)],
                                  [(3, Orientation.UP),
@@ -233,9 +262,10 @@ if __name__ == "__main__":
                                     (1, Orientation.DOWN),
                                     (6, Orientation.DOWN)],
                                    [(7, Orientation.DOWN),
-                                    (9, Orientation.DOWN),
+                                    (7, Orientation.DOWN),
                                     (3, Orientation.DOWN)]]}
 
     cube_1 = Cube(faces_values=_faces_values)
-    cube_1.rotate_clockwise(facing=Facing.FRONT)
-    print(cube_1.faces)
+    cube_1.print()
+    cube_1.rotate_clockwise(facing=Facing.UP)
+    cube_1.print()
