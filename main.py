@@ -43,6 +43,30 @@ class Face:
     PIECE_COUNT = 3
     PIECE_VALUE_INDEX = 0
     PIECE_ORIENTATION_INDEX = 1
+    EDGES_COLLISION = {Facing.FRONT: {Orientation.UP: lambda cells, index: cells[0][index],
+                                      Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
+                                      Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
+                                      Orientation.DOWN: lambda cells, index: cells[index][0]},
+                       Facing.DOWN: {Orientation.UP: lambda cells, index: cells[0][index],
+                                     Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
+                                     Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
+                                     Orientation.DOWN: lambda cells, index: cells[index][0]},
+                       Facing.RIGHT: {Orientation.UP: lambda cells, index: cells[0][index],
+                                      Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
+                                      Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
+                                      Orientation.DOWN: lambda cells, index: cells[index][0]},
+                       Facing.LEFT: {Orientation.UP: lambda cells, index: cells[0][index],
+                                     Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
+                                     Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
+                                     Orientation.DOWN: lambda cells, index: cells[index][0]},
+                       Facing.UP: {Orientation.UP: lambda cells, index: cells[0][index],
+                                   Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
+                                   Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
+                                   Orientation.DOWN: lambda cells, index: cells[index][0]},
+                       Facing.BACK: {Orientation.UP: lambda cells, index: cells[0][index],
+                                     Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
+                                     Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
+                                     Orientation.DOWN: lambda cells, index: cells[index][0]}}
 
     def __init__(self, pieceValues: list[list[tuple[int, int]]], facing: Facing):
         # 'Face' object attribute initialization
@@ -203,10 +227,40 @@ class Cube:
                                  edgesValues=rotating_edges_values[facing_index])
 
     def rotate_counter_clockwise(self, facing: Facing):
-        pass
+        #
+        rotating_edges_values: list[list[Cell | None]] = list()
+        neighbours_edges_facing = [_facing for _facing in Facing if _facing not in (facing, (facing + 3))]
+
+        #
+        self.__faces[facing].rotate_clockwise()
+
+        #
+        for _facing in neighbours_edges_facing:
+            rotating_edges_values.append(self.__faces[_facing].get_edge_values(facing=facing))
+
+        #
+        for facing_index in range(len(neighbours_edges_facing)):
+            self.__faces[neighbours_edges_facing[(facing_index + 3) % 4]] \
+                .set_edge_values(facing=neighbours_edges_facing[facing_index],
+                                 edgesValues=rotating_edges_values[facing_index])
 
     def rotate_u_turn(self, facing: Facing):
-        pass
+        #
+        rotating_edges_values: list[list[Cell | None]] = list()
+        neighbours_edges_facing = [_facing for _facing in Facing if _facing not in (facing, (facing + 3))]
+
+        #
+        self.__faces[facing].rotate_clockwise()
+
+        #
+        for _facing in neighbours_edges_facing:
+            rotating_edges_values.append(self.__faces[_facing].get_edge_values(facing=facing))
+
+        #
+        for facing_index in range(len(neighbours_edges_facing)):
+            self.__faces[neighbours_edges_facing[(facing_index + 2) % 4]] \
+                .set_edge_values(facing=neighbours_edges_facing[facing_index],
+                                 edgesValues=rotating_edges_values[facing_index])
 
 
 if __name__ == "__main__":
@@ -267,5 +321,5 @@ if __name__ == "__main__":
 
     cube_1 = Cube(faces_values=_faces_values)
     cube_1.print()
-    cube_1.rotate_clockwise(facing=Facing.UP)
+    cube_1.rotate_clockwise(facing=Facing.FRONT)
     cube_1.print()
