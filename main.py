@@ -2,13 +2,6 @@ import copy
 import enum
 
 
-class Orientation(enum.IntEnum):
-    UP = 0
-    RIGHT = 1
-    DOWN = 2
-    LEFT = 3
-
-
 class Facing(enum.IntEnum):
     FRONT = 0
     UP = 1
@@ -19,14 +12,14 @@ class Facing(enum.IntEnum):
 
 
 class Cell:
-    def __init__(self, value: int, value_orientation: Orientation):
+    def __init__(self, value: int, value_facing: Facing):
         # 'Cell' object attributes affectations
         self.__value: int = value
-        self.__value_orientation: Orientation = value_orientation
+        self.__value_facing: Facing = value_facing
 
     def __repr__(self):
         # 'Cell' object representation in string
-        return f"<Cell object with value={self.__value} and value_orientation={self.__value_orientation}>"
+        return f"<Cell object with value={self.__value} and value_facing={self.__value_facing}>"
 
     @property
     def value(self):
@@ -36,37 +29,13 @@ class Cell:
     @property
     def value_orientation(self):
         # Return the internal 'value_orientation' variable
-        return self.__value_orientation
+        return self.__value_facing
 
 
 class Face:
-    PIECE_COUNT = 3
-    PIECE_VALUE_INDEX = 0
-    PIECE_ORIENTATION_INDEX = 1
-    EDGES_COLLISION = {Facing.FRONT: {Orientation.UP: lambda cells, index: cells[0][index],
-                                      Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
-                                      Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
-                                      Orientation.DOWN: lambda cells, index: cells[index][0]},
-                       Facing.DOWN: {Orientation.UP: lambda cells, index: cells[0][index],
-                                     Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
-                                     Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
-                                     Orientation.DOWN: lambda cells, index: cells[index][0]},
-                       Facing.RIGHT: {Orientation.UP: lambda cells, index: cells[0][index],
-                                      Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
-                                      Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
-                                      Orientation.DOWN: lambda cells, index: cells[index][0]},
-                       Facing.LEFT: {Orientation.UP: lambda cells, index: cells[0][index],
-                                     Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
-                                     Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
-                                     Orientation.DOWN: lambda cells, index: cells[index][0]},
-                       Facing.UP: {Orientation.UP: lambda cells, index: cells[0][index],
-                                   Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
-                                   Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
-                                   Orientation.DOWN: lambda cells, index: cells[index][0]},
-                       Facing.BACK: {Orientation.UP: lambda cells, index: cells[0][index],
-                                     Orientation.RIGHT: lambda cells, index: cells[index][PIECE_COUNT],
-                                     Orientation.LEFT: lambda cells, index: cells[PIECE_COUNT][index],
-                                     Orientation.DOWN: lambda cells, index: cells[index][0]}}
+    PIECE_COUNT: int = 3
+    PIECE_VALUE_INDEX: int = 0
+    PIECE_ORIENTATION_INDEX: int = 1
 
     def __init__(self, pieceValues: list[list[tuple[int, int]]], facing: Facing):
         # 'Face' object attribute initialization
@@ -78,7 +47,37 @@ class Face:
             for yIndex in range(self.PIECE_COUNT):
                 self.__cells[xIndex][yIndex] = \
                     Cell(value=pieceValues[xIndex][yIndex][self.PIECE_VALUE_INDEX],
-                         value_orientation=pieceValues[xIndex][yIndex][self.PIECE_ORIENTATION_INDEX])
+                         value_facing=pieceValues[xIndex][yIndex][self.PIECE_ORIENTATION_INDEX])
+
+        self.EDGES_COLLISION = {Facing.FRONT: {Facing.UP: self.get_top_matrix_row,
+                                               Facing.RIGHT: self.get_right_matrix_column,
+                                               Facing.DOWN: self.get_bottom_matrix_row,
+                                               Facing.LEFT: self.get_left_matrix_column},
+
+                                Facing.DOWN: {Facing.FRONT: self.get_bottom_matrix_row,
+                                              Facing.RIGHT: self.get_left_matrix_column,
+                                              Facing.BACK: self.get_top_matrix_row,
+                                              Facing.LEFT: self.get_right_matrix_column},
+
+                                Facing.RIGHT: {Facing.UP: self.get_top_matrix_row,
+                                               Facing.BACK: self.get_right_matrix_column,
+                                               Facing.DOWN: self.get_bottom_matrix_row,
+                                               Facing.FRONT: self.get_left_matrix_column},
+
+                                Facing.BACK: {Facing.UP: self.get_top_matrix_row,
+                                              Facing.RIGHT: self.get_left_matrix_column,
+                                              Facing.DOWN: self.get_right_matrix_column,
+                                              Facing.LEFT: self.get_bottom_matrix_row},
+
+                                Facing.UP: {Facing.FRONT: self.get_top_matrix_row,
+                                            Facing.RIGHT: self.get_left_matrix_column,
+                                            Facing.BACK: self.get_bottom_matrix_row,
+                                            Facing.LEFT: self.get_right_matrix_column},
+
+                                Facing.LEFT: {Facing.UP: self.get_top_matrix_row,
+                                              Facing.FRONT: self.get_right_matrix_column,
+                                              Facing.DOWN: self.get_bottom_matrix_row,
+                                              Facing.BACK: self.get_left_matrix_column}}
 
     def __repr__(self):
         # 'Face' object representation
@@ -100,25 +99,37 @@ class Face:
         print('\n'.join(str([self.__cells[xIndex][yIndex].value for yIndex in range(self.PIECE_COUNT)])
                         for xIndex in range(self.PIECE_COUNT)))
 
+    def get_top_matrix_row(self, index: int):
+        return self.__cells[0][index]
+
+    def get_left_matrix_column(self, index: int):
+        return self.__cells[index][self.PIECE_COUNT - 1]
+
+    def get_bottom_matrix_row(self, index: int):
+        return self.__cells[self.PIECE_COUNT - 1][index]
+
+    def get_right_matrix_column(self, index: int):
+        return self.__cells[index][0]
+
+    def set_top_matrix_row(self, index: int, value: int):
+        self.__cells[0][index] = value
+
+    def set_left_matrix_column(self, index: int, value: int):
+        self.__cells[index][self.PIECE_COUNT - 1] = value
+
+    def set_bottom_matrix_row(self, index: int, value: int):
+        self.__cells[self.PIECE_COUNT - 1][index] = value
+
+    def set_right_matrix_column(self, index: int, value: int):
+        self.__cells[index][0] = value
+
     def get_edge_values(self, facing: Facing):
         # Initialing edge's values variable
         edges_values = list()
 
         # Going through the '__cells' attribute to return the edge values
         for index in range(self.PIECE_COUNT):
-            # Looking to determine which side of the face we need to return
-            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))].index(facing):
-                case Orientation.UP:
-                    edges_values.append(self.__cells[0][index])
-
-                case Orientation.RIGHT:
-                    edges_values.append(self.__cells[index][self.PIECE_COUNT - 1])
-
-                case Orientation.DOWN:
-                    edges_values.append(self.__cells[self.PIECE_COUNT - 1][index])
-
-                case Orientation.LEFT:
-                    edges_values.append(self.__cells[index][0])
+            edges_values.append(self.EDGES_COLLISION[self.__facing][facing](index))
 
         # Returning the asked edge's values
         return edges_values
@@ -126,19 +137,7 @@ class Face:
     def set_edge_values(self, facing: Facing, edgesValues: list[Cell]):
         # Going through the '__cells' attribute to return the edge values
         for index in range(self.PIECE_COUNT):
-            # Looking to determine which side of the face we need to return
-            match [_facing for _facing in Facing if _facing not in (self.__facing, (self.__facing + 3))].index(facing):
-                case Orientation.UP:
-                    self.__cells[0][index] = edgesValues[index]
-
-                case Orientation.RIGHT:
-                    self.__cells[index][self.PIECE_COUNT - 1] = edgesValues[index]
-
-                case Orientation.DOWN:
-                    self.__cells[self.PIECE_COUNT - 1][index] = edgesValues[index]
-
-                case Orientation.LEFT:
-                    self.__cells[index][0] = edgesValues[index]
+            pass
 
     def rotate_clockwise(self):
         # Saving the current state of the '__cells' attribute
@@ -171,8 +170,8 @@ class Face:
 class Cube:
     FACE_COUNT = 6
 
-    def __init__(self, faces_values: dict[Facing, list[list[tuple[int, Orientation]]]]):
-        self.__faces: dict[Facing, Face] = {facing: Face(facing=facing, pieceValues=face_values)
+    def __init__(self, faces_values: dict[Facing, list[list[tuple[int, Facing]]]]):
+        self.__faces: dict[Facing, Face] = {facing: Face(pieceValues=face_values, facing=facing)
                                             for facing, face_values in faces_values.items()}
 
     def __repr__(self):
@@ -264,60 +263,60 @@ class Cube:
 
 
 if __name__ == "__main__":
-    _faces_values = {Facing.FRONT: [[(4, Orientation.UP),
-                                     (3, Orientation.UP),
-                                     (6, Orientation.UP)],
-                                    [(7, Orientation.UP),
-                                     (5, Orientation.UP),
-                                     (1, Orientation.UP)],
-                                    [(7, Orientation.UP),
-                                     (2, Orientation.UP),
-                                     (8, Orientation.UP)]],
-                     Facing.DOWN: [[(3, Orientation.UP),
-                                    (8, Orientation.UP),
-                                    (7, Orientation.UP)],
-                                   [(2, Orientation.UP),
-                                    (1, Orientation.UP),
-                                    (7, Orientation.UP)],
-                                   [(5, Orientation.UP),
-                                    (6, Orientation.UP),
-                                    (4, Orientation.UP)]],
-                     Facing.RIGHT: [[(7, Orientation.UP),
-                                     (7, Orientation.UP),
-                                     (1, Orientation.UP)],
-                                    [(2, Orientation.UP),
-                                     (4, Orientation.UP),
-                                     (8, Orientation.UP)],
-                                    [(5, Orientation.UP),
-                                     (3, Orientation.UP),
-                                     (6, Orientation.UP)]],
-                     Facing.LEFT: [[(1, Orientation.UP),
-                                    (4, Orientation.UP),
-                                    (2, Orientation.UP)],
-                                   [(8, Orientation.UP),
-                                    (7, Orientation.UP),
-                                    (3, Orientation.UP)],
-                                   [(6, Orientation.UP),
-                                    (7, Orientation.UP),
-                                    (5, Orientation.UP)]],
-                     Facing.UP: [[(7, Orientation.UP),
-                                  (8, Orientation.UP),
-                                  (7, Orientation.UP)],
-                                 [(3, Orientation.UP),
-                                  (6, Orientation.UP),
-                                  (4, Orientation.UP)],
-                                 [(2, Orientation.UP),
-                                  (5, Orientation.UP),
-                                  (1, Orientation.UP)]],
-                     Facing.BACK: [[(4, Orientation.DOWN),
-                                    (2, Orientation.DOWN),
-                                    (8, Orientation.DOWN)],
-                                   [(5, Orientation.DOWN),
-                                    (1, Orientation.DOWN),
-                                    (6, Orientation.DOWN)],
-                                   [(7, Orientation.DOWN),
-                                    (7, Orientation.DOWN),
-                                    (3, Orientation.DOWN)]]}
+    _faces_values = {Facing.FRONT: [[(4, Facing.UP),
+                                     (3, Facing.UP),
+                                     (6, Facing.UP)],
+                                    [(7, Facing.UP),
+                                     (5, Facing.UP),
+                                     (1, Facing.UP)],
+                                    [(7, Facing.UP),
+                                     (2, Facing.UP),
+                                     (8, Facing.UP)]],
+                     Facing.DOWN: [[(3, Facing.UP),
+                                    (8, Facing.UP),
+                                    (7, Facing.UP)],
+                                   [(2, Facing.UP),
+                                    (1, Facing.UP),
+                                    (7, Facing.UP)],
+                                   [(5, Facing.UP),
+                                    (6, Facing.UP),
+                                    (4, Facing.UP)]],
+                     Facing.RIGHT: [[(7, Facing.UP),
+                                     (7, Facing.UP),
+                                     (1, Facing.UP)],
+                                    [(2, Facing.UP),
+                                     (4, Facing.UP),
+                                     (8, Facing.UP)],
+                                    [(5, Facing.UP),
+                                     (3, Facing.UP),
+                                     (6, Facing.UP)]],
+                     Facing.LEFT: [[(1, Facing.UP),
+                                    (4, Facing.UP),
+                                    (2, Facing.UP)],
+                                   [(8, Facing.UP),
+                                    (7, Facing.UP),
+                                    (3, Facing.UP)],
+                                   [(6, Facing.UP),
+                                    (7, Facing.UP),
+                                    (5, Facing.UP)]],
+                     Facing.UP: [[(7, Facing.UP),
+                                  (8, Facing.UP),
+                                  (7, Facing.UP)],
+                                 [(3, Facing.UP),
+                                  (6, Facing.UP),
+                                  (4, Facing.UP)],
+                                 [(2, Facing.UP),
+                                  (5, Facing.UP),
+                                  (1, Facing.UP)]],
+                     Facing.BACK: [[(4, Facing.DOWN),
+                                    (2, Facing.DOWN),
+                                    (8, Facing.DOWN)],
+                                   [(5, Facing.DOWN),
+                                    (1, Facing.DOWN),
+                                    (6, Facing.DOWN)],
+                                   [(7, Facing.DOWN),
+                                    (7, Facing.DOWN),
+                                    (3, Facing.DOWN)]]}
 
     cube_1 = Cube(faces_values=_faces_values)
     cube_1.print()
